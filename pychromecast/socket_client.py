@@ -824,7 +824,7 @@ class SocketClient(threading.Thread, CastStatusListener):
                     self.port,
                     exc,
                 )
-                continue
+                raise socket.error("socket connection broken")
         return b"".join(chunks)
 
     def _read_message(self) -> CastMessage:
