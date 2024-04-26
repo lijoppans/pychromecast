@@ -242,7 +242,7 @@ class SocketClient(threading.Thread, CastStatusListener):
             self.socket = None
 
         # Make sure nobody is blocking.
-        for callback_function in self._request_callbacks.values():
+        for callback_function in list(self._request_callbacks.values()):
             callback_function(False, None)
 
         self.app_namespaces = []
