@@ -816,6 +816,15 @@ class SocketClient(threading.Thread, CastStatusListener):
                     self.port,
                 )
                 continue
+            except ssl.SSLError as exc:
+                self.logger.debug(
+                    "[%s(%s):%s] SSLError in : _read_bytes_from_socket: %s",
+                    self.fn or "",
+                    self.host,
+                    self.port,
+                    exc,
+                )
+                continue
         return b"".join(chunks)
 
     def _read_message(self) -> CastMessage:
