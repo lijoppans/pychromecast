@@ -532,6 +532,9 @@ class SocketClient(threading.Thread, CastStatusListener):
             try:
                 if self._run_once(timeout=POLL_TIME_BLOCKING) == 1:
                     break
+            except PyChromecastStopped:
+                self.logger.error("Socket client's thread is stopped.")
+                break
             except Exception:  # pylint: disable=broad-except
                 self._force_recon = True
                 self.logger.exception(
