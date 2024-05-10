@@ -977,12 +977,14 @@ class SocketClient(threading.Thread, CastStatusListener):
         """Ensure we opened a channel to destination_id."""
         if destination_id not in self._open_channels:
             self._open_channels.append(destination_id)
+            conn_type = 0 if destination_id == PLATFORM_DESTINATION_ID else 2
 
             self.send_message(
                 destination_id,
                 NS_CONNECTION,
                 {
                     MESSAGE_TYPE: TYPE_CONNECT,
+                    "connType": conn_type,
                     "origin": {},
                     "userAgent": "PyChromecast",
                     "senderInfo": {
