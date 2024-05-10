@@ -486,7 +486,10 @@ class SocketClient(threading.Thread, CastStatusListener):
             # we will automatically connect to it to receive updates
             for namespace in self.app_namespaces:
                 if namespace in self._handlers:
-                    self._ensure_channel_connected(self.destination_id)
+                    if status.app_id not in ["30A4B500", "458D5084"]:
+                        self._ensure_channel_connected(self.destination_id, conn_type=2)
+                    else:
+                        self._ensure_channel_connected(self.destination_id)
                     for handler in set(self._handlers[namespace]):
                         handler.channel_connected()
 
@@ -973,11 +976,10 @@ class SocketClient(threading.Thread, CastStatusListener):
         listener.new_connection_status(status)"""
         self._connection_listeners.append(listener)
 
-    def _ensure_channel_connected(self, destination_id: str) -> None:
+    def _ensure_channel_connected(self, destination_id: str, conn_type: int = 0) -> None:
         """Ensure we opened a channel to destination_id."""
         if destination_id not in self._open_channels:
             self._open_channels.append(destination_id)
-            conn_type = 0 if destination_id == PLATFORM_DESTINATION_ID else 2
 
             self.send_message(
                 destination_id,
