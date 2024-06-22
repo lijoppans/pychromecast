@@ -354,6 +354,9 @@ class Chromecast(CastStatusListener):
         self.register_connection_listener = (
             self.socket_client.register_connection_listener
         )
+        self.unregister_connection_listener = (
+            self.socket_client.unregister_connection_listener
+        )
 
     @property
     def ignore_cec(self) -> bool:
