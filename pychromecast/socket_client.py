@@ -535,6 +535,10 @@ class SocketClient(threading.Thread, CastStatusListener):
             try:
                 if self._run_once(timeout=POLL_TIME_BLOCKING) == 1:
                     break
+            except PyChromecastStopped:
+                self.logger.error("pychromecast.error.PyChromecastStopped: Socket client's thread is stopped")
+                self._force_recon = True
+                break
             except Exception:  # pylint: disable=broad-except
                 self._force_recon = True
                 self.logger.exception(
@@ -975,6 +979,10 @@ class SocketClient(threading.Thread, CastStatusListener):
         changes. Listeners will be called with
         listener.new_connection_status(status)"""
         self._connection_listeners.append(listener)
+    
+    def unregister_connection_listener(self, listener: ConnectionStatusListener) -> None:
+        """Unregister a connection listener."""
+        self._connection_listeners.remove(listener)
 
     def _ensure_channel_connected(self, destination_id: str, conn_type: int = 0) -> None:
         """Ensure we opened a channel to destination_id."""
