@@ -338,19 +338,18 @@ class Chromecast(CastStatusListener):
             zconf=zconf,
         )
 
-        receiver_controller = self.socket_client.receiver_controller
-        receiver_controller.register_status_listener(self)
+        self.socket_client.receiver_controller.register_status_listener(self)
 
         # Forward these methods
-        self.set_volume = receiver_controller.set_volume
-        self.set_volume_muted = receiver_controller.set_volume_muted
+        self.set_volume = self.socket_client.receiver_controller.set_volume
+        self.set_volume_muted = self.socket_client.receiver_controller.set_volume_muted
         self.play_media = self.socket_client.media_controller.play_media
         self.register_handler = self.socket_client.register_handler
         self.unregister_handler = self.socket_client.unregister_handler
-        self.register_status_listener = receiver_controller.register_status_listener
-        self.unregister_status_listener = receiver_controller.unregister_status_listener
+        self.register_status_listener = self.socket_client.receiver_controller.register_status_listener
+        self.unregister_status_listener = self.socket_client.receiver_controller.unregister_status_listener
         self.register_launch_error_listener = (
-            receiver_controller.register_launch_error_listener
+            self.socket_client.receiver_controller.register_launch_error_listener
         )
         self.register_connection_listener = (
             self.socket_client.register_connection_listener
