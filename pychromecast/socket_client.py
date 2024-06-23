@@ -618,13 +618,14 @@ class SocketClient(threading.Thread, CastStatusListener):
                     if self.stop.is_set():
                         return 1
                 raise
-            except socket.error:
+            except socket.error as exc:
                 self._force_recon = True
                 self.logger.error(
-                    "[%s(%s):%s] Error reading from socket.",
+                    "[%s(%s):%s] Error reading from socket: %s",
                     self.fn or "",
                     self.host,
                     self.port,
+                    str(exc),
                 )
             else:
                 data = _dict_from_message_payload(message)
