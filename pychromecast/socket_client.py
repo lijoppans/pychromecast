@@ -494,7 +494,10 @@ class SocketClient(threading.Thread, CastStatusListener):
             # we will automatically connect to it to receive updates
             for namespace in self.app_namespaces:
                 if namespace in self._handlers:
-                    self._ensure_channel_connected(self.destination_id)
+                    if status.app_id not in ["30A4B500", "458D5084"]:
+                        self._ensure_channel_connected(self.destination_id, conn_type=2)
+                    else:
+                        self._ensure_channel_connected(self.destination_id)
                     for handler in set(self._handlers[namespace]):
                         handler.channel_connected()
 
@@ -568,7 +571,7 @@ class SocketClient(threading.Thread, CastStatusListener):
 
         # poll the socket, as well as the socketpair to allow us to be interrupted
         try:
-            ready = self.selector.select()
+            ready = self.selector.select(10)
         except (ValueError, OSError) as exc:
             self.logger.error(
                 "[%s(%s):%s] Error in select call: %s",
@@ -970,8 +973,12 @@ class SocketClient(threading.Thread, CastStatusListener):
         changes. Listeners will be called with
         listener.new_connection_status(status)"""
         self._connection_listeners.append(listener)
+        
+    def unregister_connection_listener(self, listener: ConnectionStatusListener) -> None:
+        """Unregister a connection listener."""
+        self._connection_listeners.remove(listener)
 
-    def _ensure_channel_connected(self, destination_id: str) -> None:
+    def _ensure_channel_connected(self, destination_id: str, conn_type: int = 0) -> None:
         """Ensure we opened a channel to destination_id."""
         if destination_id not in self._open_channels:
             self._open_channels.append(destination_id)
@@ -981,6 +988,7 @@ class SocketClient(threading.Thread, CastStatusListener):
                 NS_CONNECTION,
                 {
                     MESSAGE_TYPE: TYPE_CONNECT,
+                    "connType": conn_type,
                     "origin": {},
                     "userAgent": "PyChromecast",
                     "senderInfo": {
