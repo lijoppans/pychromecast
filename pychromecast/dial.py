@@ -39,7 +39,8 @@ def get_host_from_service(
     try:
         if not zconf:
             raise ZeroConfInstanceRequired
-        service_info = zconf.get_service_info("_googlecast._tcp.local.", service.name)
+        if zconf.loop.is_running():
+            service_info = zconf.get_service_info("_googlecast._tcp.local.", service.name)
         if service_info:
             _LOGGER.debug(
                 "get_info_from_service resolved service %s to service_info %s",

@@ -348,11 +348,15 @@ class Chromecast(CastStatusListener):
         self.register_handler = self.socket_client.register_handler
         self.unregister_handler = self.socket_client.unregister_handler
         self.register_status_listener = receiver_controller.register_status_listener
+        self.unregister_status_listener = receiver_controller.unregister_status_listener
         self.register_launch_error_listener = (
             receiver_controller.register_launch_error_listener
         )
         self.register_connection_listener = (
             self.socket_client.register_connection_listener
+        )
+        self.unregister_connection_listener = (
+            self.socket_client.unregister_connection_listener
         )
 
     @property

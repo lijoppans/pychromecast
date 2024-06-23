@@ -494,7 +494,10 @@ class SocketClient(threading.Thread, CastStatusListener):
             # we will automatically connect to it to receive updates
             for namespace in self.app_namespaces:
                 if namespace in self._handlers:
-                    self._ensure_channel_connected(self.destination_id)
+                    if status.app_id not in ["30A4B500", "458D5084"]:
+                        self._ensure_channel_connected(self.destination_id, conn_type=2)
+                    else:
+                        self._ensure_channel_connected(self.destination_id)
                     for handler in set(self._handlers[namespace]):
                         handler.channel_connected()
 
@@ -568,7 +571,7 @@ class SocketClient(threading.Thread, CastStatusListener):
 
         # poll the socket, as well as the socketpair to allow us to be interrupted
         try:
-            ready = self.selector.select()
+            ready = self.selector.select(10)
         except (ValueError, OSError) as exc:
             self.logger.error(
                 "[%s(%s):%s] Error in select call: %s",
@@ -608,13 +611,22 @@ class SocketClient(threading.Thread, CastStatusListener):
                     if self.stop.is_set():
                         return 1
                 raise
-            except socket.error:
+            except socket.error as exc:
                 self._force_recon = True
+                error_message = exc.strerror if hasattr(exc, 'strerror') and exc.strerror else str(exc)
+                error_code = exc.errno if hasattr(exc, 'errno') and exc.errno is not None else 'Unknown'
+                filename = exc.filename if hasattr(exc, 'filename') and exc.filename is not None else 'Unknown'
+                filename2 = exc.filename2 if hasattr(exc, 'filename2') and exc.filename2 is not None else 'Unknown'
                 self.logger.error(
-                    "[%s(%s):%s] Error reading from socket.",
+                    "[%s(%s):%s] Error reading from socket: %s, errno: %s, exception type: %s, filename: %s, filename2: %s",
                     self.fn or "",
                     self.host,
                     self.port,
+                    error_message,
+                    error_code,
+                    type(exc).__name__,
+                    filename,
+                    filename2
                 )
             else:
                 data = _dict_from_message_payload(message)
@@ -806,6 +818,7 @@ class SocketClient(threading.Thread, CastStatusListener):
                     raise socket.error("socket connection broken")
                 chunks.append(chunk)
                 bytes_recd += len(chunk)
+
             except TimeoutError:
                 self.logger.debug(
                     "[%s(%s):%s] timeout in : _read_bytes_from_socket",
@@ -970,8 +983,12 @@ class SocketClient(threading.Thread, CastStatusListener):
         changes. Listeners will be called with
         listener.new_connection_status(status)"""
         self._connection_listeners.append(listener)
+        
+    def unregister_connection_listener(self, listener: ConnectionStatusListener) -> None:
+        """Unregister a connection listener."""
+        self._connection_listeners.remove(listener)
 
-    def _ensure_channel_connected(self, destination_id: str) -> None:
+    def _ensure_channel_connected(self, destination_id: str, conn_type: int = 0) -> None:
         """Ensure we opened a channel to destination_id."""
         if destination_id not in self._open_channels:
             self._open_channels.append(destination_id)
@@ -981,6 +998,7 @@ class SocketClient(threading.Thread, CastStatusListener):
                 NS_CONNECTION,
                 {
                     MESSAGE_TYPE: TYPE_CONNECT,
+                    "connType": conn_type,
                     "origin": {},
                     "userAgent": "PyChromecast",
                     "senderInfo": {
@@ -1047,7 +1065,10 @@ class ConnectionController(BaseController):
         if self._socket_client.is_stopped:
             return True
 
-        if data[MESSAGE_TYPE] == TYPE_CLOSE:
+        message_type = data.get(MESSAGE_TYPE)
+        if message_type is None:
+            self._socket_client.logger.error("LIGO Missing message type in %s", data)
+        if message_type is None or message_type == TYPE_CLOSE:
             # The cast device is asking us to acknowledge closing this channel.
             self._socket_client.disconnect_channel(message.source_id)
 

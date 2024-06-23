@@ -139,6 +139,10 @@ class ReceiverController(BaseController):
         listener.new_launch_error(launch_failure)"""
         self._launch_error_listeners.append(listener)
 
+    def unregister_status_listener(self, listener: CastStatusListener) -> None:
+        """Unregister a status listener."""
+        self._status_listeners.remove(listener)
+
     def update_status(
         self,
         *,
