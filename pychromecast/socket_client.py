@@ -1062,7 +1062,8 @@ class ConnectionController(BaseController):
         if self._socket_client.is_stopped:
             return True
 
-        if data.get(MESSAGE_TYPE) == TYPE_CLOSE:
+        message_type = data.get(MESSAGE_TYPE)
+        if message_type is None or message_type == TYPE_CLOSE:
             # The cast device is asking us to acknowledge closing this channel.
             self._socket_client.disconnect_channel(message.source_id)
 
