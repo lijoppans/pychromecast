@@ -543,6 +543,14 @@ class SocketClient(threading.Thread, CastStatusListener):
             try:
                 if self._run_once() == 1:
                     break
+            except PyChromecastStopped:
+                self._force_recon = True
+                self.logger.error(
+                    "[%s(%s):%s] Stopped while running, disconnecting.",
+                    self.fn or "",
+                    self.host,
+                    self.port,
+                )
             except Exception:  # pylint: disable=broad-except
                 self._force_recon = True
                 self.logger.exception(
